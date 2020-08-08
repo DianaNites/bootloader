@@ -5,8 +5,9 @@ authors = ["Diana"]
 edition = "2018"
 
 [dependencies]
-# uefi = { version = "0.5.0", features = ["alloc"] }
-uefi = { version = "0.5.0" }
+uefi = { version = "0.5.0", features = ["alloc"] }
+uefi-services = "0.2.5"
+log = "0.4.11"
 
 [package.metadata.cargo-sysroot]
 target = "x86_64-unknown-uefi"

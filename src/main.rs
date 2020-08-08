@@ -1,15 +1,17 @@
 #![no_std]
 #![no_main]
 #![feature(abi_efiapi)]
-use core::panic::PanicInfo;
+use log::info;
 use uefi::prelude::*;
 
 #[entry]
-fn efi_main(_handle: Handle, _system_table: SystemTable<Boot>) -> Status {
-    todo!()
-}
+fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
+    uefi_services::init(&st).expect_success("Failed to init");
 
-#[panic_handler]
-fn panic(_: &PanicInfo) -> ! {
-    todo!()
+    let rev = st.uefi_revision();
+    info!("UEFI {:?}", rev);
+
+    info!("{:?}", st.stdout().current_mode());
+
+    Status::SUCCESS
 }

@@ -2,6 +2,12 @@
 # It is not intended for manual editing.
 [[package]]
 name = "bit_field"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed8765909f9009617974ab6b7d332625b320b33c326b1e9321382ef1999b5d56"
+
+[[package]]
+name = "bit_field"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a165d606cf084741d4ac3a28fb6e9b1eb0bd31f6cd999098cfddb0b2ab381dc0"
@@ -16,7 +22,9 @@ checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 name = "bootloader"
 version = "0.1.0"
 dependencies = [
+ "log",
  "uefi",
+ "uefi-services",
 ]
 
 [[package]]
@@ -69,7 +77,7 @@ version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85061f4e43545a613c0da6b87725bf23f8da8613cf2473719c4f71a270c4ce8a"
 dependencies = [
- "bit_field",
+ "bit_field 0.10.0",
 ]
 
 [[package]]
@@ -96,7 +104,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "uefi-services"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13d6fadab864861d0ad7e3c5bdd8d80c2157779750a6b6302de3832040f47768"
+dependencies = [
+ "cfg-if",
+ "log",
+ "uefi",
+ "x86_64",
+]
+
+[[package]]
 name = "unicode-xid"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7fe0bb3479651439c9112f72b6c505038574c9fbb575ed1bf3b797fa39dd564"
+
+[[package]]
+name = "x86_64"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9144cdef072afe8afcbc511be8f421de5b3eb9f4b8ff7abff369bee38f91e7e3"
+dependencies = [
+ "bit_field 0.9.0",
+ "bitflags",
+]
