@@ -1,21 +1,19 @@
 #![no_std]
 #![no_main]
 #![feature(abi_efiapi)]
-use core::convert::{Infallible, TryInto};
+use core::convert::Infallible;
 use embedded_graphics::{
     drawable::Pixel,
     egcircle,
     egtext,
-    fonts::{Font24x32, Font6x8, Text},
-    mock_display::MockDisplay,
-    pixelcolor::{raw::*, Rgb565, RgbColor, *},
+    fonts::Font24x32,
+    pixelcolor::{RgbColor, *},
     prelude::*,
     primitive_style,
-    primitives::Circle,
-    style::{PrimitiveStyle, TextStyle},
     text_style,
 };
 use log::*;
+use tinybmp::{Bmp, FileType, Header, Pixel as BmpPixel};
 use uefi::{prelude::*, proto::console::gop::*};
 
 struct Dis<'a, 'b> {
