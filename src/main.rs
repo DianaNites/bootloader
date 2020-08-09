@@ -39,25 +39,16 @@ impl<'a, 'b, T: Into<Bgr888> + PixelColor> DrawTarget<T> for Dis<'a, 'b> {
         let (max_x, max_y) = mode.resolution();
         let (x, y) = (point.x as usize, point.y as usize);
         if x < max_x && y < max_y {
-            // info!("Current mode: {:?}", mode);
-            // let mask = mode.pixel_bitmask().unwrap();
-            // let index = point.x + point.y * (mode.stride() as i32);
-            // let index = y * mode.stride() + x;
             let index = y * mode.stride() + x;
-            // info!("Index: {}", index);
 
             let mut fb = self.graphics.frame_buffer();
-            let c: RawU24 = color.into();
-            let c: u32 = c.into_inner();
-            // info!("{:?}", c);
             unsafe {
-                // fb.write_byte(index * 4, 255);
-                // fb.write_byte(index + 2, 0);
-                // fb.write_byte(index + 3, 0);
-                fb.write_value(index * 4, c)
+                // TODO: Dynamic, support other things.
+                // count_ones on mask?
+                fb.write_value(index * 4, color)
             }
         } else {
-            // warn!("Tried to draw out of bounds");
+            warn!("Tried to draw out of bounds");
         }
         Ok(())
     }
@@ -131,13 +122,14 @@ fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
         radius = (x / 2) as _,
         style = primitive_style!(fill_color = Bgr888::new(38, 0, 27))
     );
-    let text = "Hello Rust!";
+    let text = "FUCK GRAPHICS I HATE YOU";
     let x = x - (text.len() * 12);
     let y = y - (32 / 2);
     let t = egtext!(
         text = text,
         top_left = (x as _, y as _),
-        style = text_style!(font = Font24x32, text_color = Bgr888::new(2, 136, 255))
+        // style = text_style!(font = Font24x32, text_color = Bgr888::new(2, 136, 255))
+        style = text_style!(font = Font24x32, text_color = Bgr888::new(70, 130, 180))
     );
 
     let mut display = Dis::new(unsafe { &mut *graphics.get() });
