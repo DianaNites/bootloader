@@ -157,23 +157,22 @@ fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
         // style = primitive_style!(fill_color = Rgb888::new(34, 139, 34))
         style = primitive_style!(fill_color = Rgb565::BLUE)
     );
-    let text = "RUST UEFI SAYS TRANS RIGHTS";
+    let text = "RUST HARDWARE UEFI SAYS TRANS RIGHTS";
     let x = x - (text.len() * 12);
     let y = y - (32 / 2);
     let t = egtext!(
         text = text,
         top_left = (x as _, y as _),
         // style = text_style!(font = Font24x32, text_color = Bgr888::new(2, 136, 255))
-        // style = text_style!(font = Font24x32, text_color = Rgb888::new(139, 0, 139))
-        style = text_style!(font = Font24x32, text_color = Rgb565::RED)
+        style = text_style!(font = Font24x32, text_color = Rgb888::new(139, 0, 139))
     );
     let bmp = Bmp::from_slice(IMAGE).expect("Failed to parse BMP image");
-    let image: Image<Bmp, Rgb888> = Image::new(&bmp, Point::zero());
+    let image: Image<Bmp, Bgr888> = Image::new(&bmp, Point::zero());
 
     let mut display = Dis::new(unsafe { &mut *graphics.get() });
     // c.draw(&mut display).unwrap();
     image.draw(&mut display).unwrap();
-    // t.draw(&mut display).unwrap();
+    t.draw(&mut display).unwrap();
 
     loop {
         st.boot_services().stall(10000);
