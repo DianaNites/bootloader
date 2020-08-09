@@ -67,18 +67,18 @@ impl<'a, 'b, T: Into<Bgr888> + PixelColor> DrawTarget<T> for Dis<'a, 'b> {
         Size::new(width as u32, height as u32)
     }
 
-    // fn clear(&mut self, color: T) -> Result<(), Self::Error> {
-    //     let (width, height) = self.graphics.current_mode_info().resolution();
-    //     let color: Bgr888 = color.into();
-    //     self.graphics
-    //         .blt(BltOp::VideoFill {
-    //             color: BltPixel::new(color.r(), color.g(), color.b()),
-    //             dest: (0, 0),
-    //             dims: (width - 1, height - 1),
-    //         })
-    //         .unwrap_success();
-    //     Ok(())
-    // }
+    fn clear(&mut self, color: T) -> Result<(), Self::Error> {
+        let (width, height) = self.graphics.current_mode_info().resolution();
+        let color: Bgr888 = color.into();
+        self.graphics
+            .blt(BltOp::VideoFill {
+                color: BltPixel::new(color.r(), color.g(), color.b()),
+                dest: (0, 0),
+                dims: (width - 1, height - 1),
+            })
+            .unwrap_success();
+        Ok(())
+    }
 }
 
 #[entry]
@@ -133,6 +133,7 @@ fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
     );
     let text = "Hello Rust!";
     let x = x - (text.len() * 12);
+    let y = y - (32 / 2);
     let t = egtext!(
         text = text,
         top_left = (x as _, y as _),
