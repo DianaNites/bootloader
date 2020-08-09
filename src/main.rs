@@ -34,8 +34,12 @@ impl<'a, 'b, T: Into<Bgr888> + PixelColor> DrawTarget<T> for Dis<'a, 'b> {
     fn draw_pixel(&mut self, item: Pixel<T>) -> Result<(), Self::Error> {
         let Pixel(point, color) = item;
         let color = color.into();
-
         let mode = self.graphics.current_mode_info();
+        if let PixelFormat::BltOnly = mode.pixel_format() {
+            warn!("Graphics framebuffer unsupported.");
+            return Ok(());
+        }
+
         let (max_x, max_y) = mode.resolution();
         let (x, y) = (point.x as usize, point.y as usize);
         if x < max_x && y < max_y {
@@ -43,9 +47,23 @@ impl<'a, 'b, T: Into<Bgr888> + PixelColor> DrawTarget<T> for Dis<'a, 'b> {
 
             let mut fb = self.graphics.frame_buffer();
             unsafe {
-                // TODO: Dynamic, support other things.
-                // count_ones on mask?
-                fb.write_value(index, color)
+                match mode.pixel_format() {
+                    PixelFormat::RGB => {
+                        fb.write_value(index, Rgb888::from(color));
+                    }
+                    PixelFormat::BGR => {
+                        fb.write_value(index, color);
+                    }
+                    PixelFormat::Bitmask => {
+                        let mask = mode.pixel_bitmask().unwrap();
+                        // TODO: Dynamic, support other things.
+                        // count_ones on mask?
+                        warn!("Unsupported graphics format");
+                    }
+                    PixelFormat::BltOnly => {
+                        warn!("Unsupported: Device only supports blt");
+                    }
+                }
             }
         } else {
             warn!("Tried to draw out of bounds");
