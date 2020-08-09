@@ -39,13 +39,13 @@ impl<'a, 'b, T: Into<Bgr888> + PixelColor> DrawTarget<T> for Dis<'a, 'b> {
         let (max_x, max_y) = mode.resolution();
         let (x, y) = (point.x as usize, point.y as usize);
         if x < max_x && y < max_y {
-            let index = y * mode.stride() + x;
+            let index = (y * mode.stride() + x) * 4;
 
             let mut fb = self.graphics.frame_buffer();
             unsafe {
                 // TODO: Dynamic, support other things.
                 // count_ones on mask?
-                fb.write_value(index * 4, color)
+                fb.write_value(index, color)
             }
         } else {
             warn!("Tried to draw out of bounds");
