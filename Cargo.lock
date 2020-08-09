@@ -29,6 +29,7 @@ dependencies = [
  "memchr",
  "profont",
  "tinybmp",
+ "tinytga",
  "uefi",
  "uefi-services",
 ]
@@ -144,6 +145,17 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "781e52493917138f60c3b98b95e39967eafd28d3c470d0d35ae020b47f011b5d"
 dependencies = [
+ "embedded-graphics",
+ "nom",
+]
+
+[[package]]
+name = "tinytga"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fefeaa83b75c6d5db01bc7023487e887870537134e5a7b3f06c0b3d10baeeae8"
+dependencies = [
+ "embedded-graphics",
  "nom",
 ]
 

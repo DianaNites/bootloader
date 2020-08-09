@@ -7,14 +7,23 @@ use embedded_graphics::{
     egcircle,
     egtext,
     fonts::Font24x32,
+    image::Image,
     pixelcolor::{RgbColor, *},
     prelude::*,
     primitive_style,
     text_style,
 };
 use log::*;
-use tinybmp::{Bmp, FileType, Header, Pixel as BmpPixel};
+use tinybmp::Bmp;
+use tinytga::Tga;
 use uefi::{prelude::*, proto::console::gop::*};
+
+static IMAGE: &[u8] = include_bytes!("../scratch/EFI/icons/Trans-Rust.bmp");
+// static IMAGE: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.bmp");
+
+// static IMAGE_TGA: &[u8] =
+// include_bytes!("../scratch/EFI/icons/Trans-Rust.tga");
+static IMAGE_TGA: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.tga");
 
 struct Dis<'a, 'b> {
     graphics: &'a mut GraphicsOutput<'b>,
@@ -33,11 +42,6 @@ impl<'a, 'b, T: Into<Bgr888> + PixelColor> DrawTarget<T> for Dis<'a, 'b> {
         let Pixel(point, color) = item;
         let color = color.into();
         let mode = self.graphics.current_mode_info();
-        if let PixelFormat::BltOnly = mode.pixel_format() {
-            warn!("Graphics framebuffer unsupported.");
-            return Ok(());
-        }
-
         let (max_x, max_y) = mode.resolution();
         let (x, y) = (point.x as usize, point.y as usize);
         if x < max_x && y < max_y {
@@ -64,7 +68,7 @@ impl<'a, 'b, T: Into<Bgr888> + PixelColor> DrawTarget<T> for Dis<'a, 'b> {
                 }
             }
         } else {
-            warn!("Tried to draw out of bounds");
+            debug!("Tried to draw out of bounds");
         }
         Ok(())
     }
@@ -150,21 +154,26 @@ fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
     let c = egcircle!(
         center = (x as _, y as _),
         radius = (x / 2) as _,
-        style = primitive_style!(fill_color = Bgr888::new(38, 0, 27))
+        // style = primitive_style!(fill_color = Rgb888::new(34, 139, 34))
+        style = primitive_style!(fill_color = Rgb565::BLUE)
     );
-    let text = "FUCK GRAPHICS I HATE YOU";
+    let text = "RUST UEFI SAYS TRANS RIGHTS";
     let x = x - (text.len() * 12);
     let y = y - (32 / 2);
     let t = egtext!(
         text = text,
         top_left = (x as _, y as _),
         // style = text_style!(font = Font24x32, text_color = Bgr888::new(2, 136, 255))
-        style = text_style!(font = Font24x32, text_color = Bgr888::new(70, 130, 180))
+        // style = text_style!(font = Font24x32, text_color = Rgb888::new(139, 0, 139))
+        style = text_style!(font = Font24x32, text_color = Rgb565::RED)
     );
+    let bmp = Bmp::from_slice(IMAGE).expect("Failed to parse BMP image");
+    let image: Image<Bmp, Rgb888> = Image::new(&bmp, Point::zero());
 
     let mut display = Dis::new(unsafe { &mut *graphics.get() });
-    c.draw(&mut display).unwrap();
-    t.draw(&mut display).unwrap();
+    // c.draw(&mut display).unwrap();
+    image.draw(&mut display).unwrap();
+    // t.draw(&mut display).unwrap();
 
     loop {
         st.boot_services().stall(10000);
