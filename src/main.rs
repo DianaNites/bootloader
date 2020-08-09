@@ -55,7 +55,7 @@ impl<'a, 'b, T: Into<Bgr888> + PixelColor> DrawTarget<T> for Dis<'a, 'b> {
                         fb.write_value(index, color);
                     }
                     PixelFormat::Bitmask => {
-                        let mask = mode.pixel_bitmask().unwrap();
+                        let _mask = mode.pixel_bitmask().unwrap();
                         // TODO: Dynamic, support other things.
                         // count_ones on mask?
                         warn!("Unsupported graphics format");
@@ -124,13 +124,27 @@ fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
         mode = g.current_mode_info();
     }
     info!("Current Mode: {:?}", mode);
-    // unsafe {
-    //     let g = &*graphics.get();
-    //     for mode in g.modes() {
-    //         let mode = mode.unwrap();
-    //         info!("{:?}", mode.info());
-    //     }
-    // }
+    unsafe {
+        let g = &mut *graphics.get();
+        let mut m = None;
+        for mode in g.modes() {
+            let mode = mode.unwrap();
+            let info = mode.info();
+            info!("{:?}", mode.info());
+            if info.resolution() == (1280, 768) {
+                m = Some(mode);
+                break;
+            }
+        }
+        if let Some(m) = m {
+            g.set_mode(&m).unwrap().log();
+        }
+    }
+    let mode;
+    unsafe {
+        let g = &*graphics.get();
+        mode = g.current_mode_info();
+    }
 
     let (x, y) = mode.resolution();
     let x = x / 2;
