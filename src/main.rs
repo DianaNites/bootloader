@@ -18,8 +18,8 @@ use tinybmp::Bmp;
 use tinytga::Tga;
 use uefi::{prelude::*, proto::console::gop::*};
 
-static IMAGE: &[u8] = include_bytes!("../scratch/EFI/icons/Trans-Rust.bmp");
-// static IMAGE: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.bmp");
+// static IMAGE: &[u8] = include_bytes!("../scratch/EFI/icons/Trans-Rust.bmp");
+static IMAGE: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.bmp");
 
 // static IMAGE_TGA: &[u8] =
 // include_bytes!("../scratch/EFI/icons/Trans-Rust.tga");
@@ -167,11 +167,16 @@ fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
         style = text_style!(font = Font24x32, text_color = Rgb888::new(139, 0, 139))
     );
     let bmp = Bmp::from_slice(IMAGE).expect("Failed to parse BMP image");
-    let image: Image<Bmp, Bgr888> = Image::new(&bmp, Point::zero());
+    let image: Image<Bmp, Rgb565> = Image::new(&bmp, Point::zero());
 
     let mut display = Dis::new(unsafe { &mut *graphics.get() });
     // c.draw(&mut display).unwrap();
-    image.draw(&mut display).unwrap();
+    // image.draw(&mut display).unwrap();
+    image
+        .into_iter()
+        .map(|Pixel(p, c)| Pixel(p, Bgr565::from(c)))
+        .draw(&mut display)
+        .unwrap();
     t.draw(&mut display).unwrap();
 
     loop {
