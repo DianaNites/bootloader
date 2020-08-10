@@ -5,7 +5,7 @@ authors = ["Diana"]
 edition = "2018"
 
 [dependencies]
-uefi = { version = "0.5.0", features = ["alloc"] }
+uefi = { version = "0.5.0", features = ["alloc", "logger"] }
 uefi-services = "0.2.5"
 log = "0.4.11"
 embedded-graphics = "0.6.2"
