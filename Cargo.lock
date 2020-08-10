@@ -31,6 +31,7 @@ dependencies = [
  "tinybmp",
  "tinytga",
  "uefi",
+ "uefi-graphics",
  "uefi-services",
 ]
 
@@ -178,6 +179,14 @@ dependencies = [
  "log",
  "ucs2",
  "uefi-macros",
+]
+
+[[package]]
+name = "uefi-graphics"
+version = "0.1.0"
+dependencies = [
+ "embedded-graphics",
+ "uefi",
 ]
 
 [[package]]

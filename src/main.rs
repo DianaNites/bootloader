@@ -1,7 +1,6 @@
 #![no_std]
 #![no_main]
 #![feature(abi_efiapi)]
-use core::convert::Infallible;
 use embedded_graphics::{
     drawable::Pixel,
     egcircle,
@@ -15,82 +14,16 @@ use embedded_graphics::{
 };
 use log::*;
 use tinybmp::Bmp;
-use tinytga::Tga;
 use uefi::{prelude::*, proto::console::gop::*};
+use uefi_graphics::UefiDisplay;
 
 // static IMAGE: &[u8] = include_bytes!("../scratch/EFI/icons/Trans-Rust.bmp");
 static IMAGE: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.bmp");
 
 // static IMAGE_TGA: &[u8] =
 // include_bytes!("../scratch/EFI/icons/Trans-Rust.tga");
-static IMAGE_TGA: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.tga");
-
-struct Dis<'a, 'b> {
-    graphics: &'a mut GraphicsOutput<'b>,
-}
-
-impl<'a, 'b> Dis<'a, 'b> {
-    fn new(graphics: &'a mut GraphicsOutput<'b>) -> Self {
-        Self { graphics }
-    }
-}
-
-impl<'a, 'b, T: Into<Bgr888> + PixelColor> DrawTarget<T> for Dis<'a, 'b> {
-    type Error = Infallible;
-
-    fn draw_pixel(&mut self, item: Pixel<T>) -> Result<(), Self::Error> {
-        let Pixel(point, color) = item;
-        let color = color.into();
-        let mode = self.graphics.current_mode_info();
-        let (max_x, max_y) = mode.resolution();
-        let (x, y) = (point.x as usize, point.y as usize);
-        if x < max_x && y < max_y {
-            let index = (y * mode.stride() + x) * 4;
-
-            let mut fb = self.graphics.frame_buffer();
-            unsafe {
-                match mode.pixel_format() {
-                    PixelFormat::RGB => {
-                        fb.write_value(index, Rgb888::from(color));
-                    }
-                    PixelFormat::BGR => {
-                        fb.write_value(index, color);
-                    }
-                    PixelFormat::Bitmask => {
-                        let _mask = mode.pixel_bitmask().unwrap();
-                        // TODO: Dynamic, support other things.
-                        // count_ones on mask?
-                        warn!("Unsupported graphics format");
-                    }
-                    PixelFormat::BltOnly => {
-                        warn!("Unsupported: Device only supports blt");
-                    }
-                }
-            }
-        } else {
-            debug!("Tried to draw out of bounds");
-        }
-        Ok(())
-    }
-
-    fn size(&self) -> Size {
-        let (width, height) = self.graphics.current_mode_info().resolution();
-        Size::new(width as u32, height as u32)
-    }
-
-    fn clear(&mut self, color: T) -> Result<(), Self::Error> {
-        let (width, height) = self.graphics.current_mode_info().resolution();
-        let color: Bgr888 = color.into();
-        self.graphics
-            .blt(BltOp::VideoFill {
-                color: BltPixel::new(color.r(), color.g(), color.b()),
-                dest: (0, 0),
-                dims: (width - 1, height - 1),
-            })
-            .unwrap_success();
-        Ok(())
-    }
-}
+// static IMAGE_TGA: &[u8] =
+// include_bytes!("../scratch/EFI/icons/rust-pride.tga");
 
 #[entry]
 fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
@@ -116,42 +49,35 @@ fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
         .set_watchdog_timer(0, u64::max_value(), None)
         .expect_success("Couldn't disable watchdog");
     info!("Attempting graphics");
-    let graphics = st
-        .boot_services()
-        .locate_protocol::<GraphicsOutput>()
-        .unwrap_success();
-    let mode;
-    unsafe {
-        let g = &*graphics.get();
-        mode = g.current_mode_info();
-    }
+    let graphics = unsafe {
+        &mut *st
+            .boot_services()
+            .locate_protocol::<GraphicsOutput>()
+            .unwrap_success()
+            .get()
+    };
+    let mode = graphics.current_mode_info();
     info!("Current Mode: {:?}", mode);
-    unsafe {
-        let g = &mut *graphics.get();
-        let mut m = None;
-        for mode in g.modes() {
-            let mode = mode.unwrap();
-            let info = mode.info();
-            info!("{:?}", mode.info());
-            if info.resolution() == (1280, 768) {
-                m = Some(mode);
-                break;
-            }
-        }
-        if let Some(m) = m {
-            g.set_mode(&m).unwrap().log();
+    info!("Attempting to switch to native resolution");
+    let mut new_mode = None;
+    for mode in graphics.modes() {
+        let mode = mode.unwrap();
+        // NOTE: QEMU Hack.
+        if mode.info().resolution() == (1280, 768) {
+            new_mode = Some(mode);
+            break;
         }
     }
-    let mode;
-    unsafe {
-        let g = &*graphics.get();
-        mode = g.current_mode_info();
+    if let Some(mode) = new_mode {
+        graphics.set_mode(&mode).unwrap().log();
     }
+    let mode = graphics.current_mode_info();
+    info!("New current Mode: {:?}", mode);
 
     let (x, y) = mode.resolution();
     let x = x / 2;
     let y = y / 2;
-    let c = egcircle!(
+    let _c = egcircle!(
         center = (x as _, y as _),
         radius = (x / 2) as _,
         // style = primitive_style!(fill_color = Rgb888::new(34, 139, 34))
@@ -169,7 +95,8 @@ fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
     let bmp = Bmp::from_slice(IMAGE).expect("Failed to parse BMP image");
     let image: Image<Bmp, Rgb565> = Image::new(&bmp, Point::zero());
 
-    let mut display = Dis::new(unsafe { &mut *graphics.get() });
+    // let mut display = UefiDisplay::new(unsafe { &mut *graphics.get() });
+    let mut display = UefiDisplay::new(mode, graphics.frame_buffer());
     // c.draw(&mut display).unwrap();
     // image.draw(&mut display).unwrap();
     image
