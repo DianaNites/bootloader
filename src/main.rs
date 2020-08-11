@@ -131,14 +131,14 @@ fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
 
     rust_pride
         .into_iter()
-        // .map(|Pixel(p, c)| Pixel(p, Bgr888::from(c)))
-        .map(|Pixel(p, c)| Pixel(p, Bgr888::new(c.r(), c.g(), c.b())))
+        .map(|Pixel(p, c)| Pixel(p, Bgr888::from(c)))
+        // .map(|Pixel(p, c)| Pixel(p, Bgr888::new(c.r(), c.g(), c.b())))
         .draw(display)
         .unwrap();
     rust_pride_bgr
         .into_iter()
-        // .map(|Pixel(p, c)| Pixel(p, Bgr888::from(c)))
-        .map(|Pixel(p, c)| Pixel(p, Bgr888::new(c.r(), c.g(), c.b())))
+        .map(|Pixel(p, c)| Pixel(p, Bgr888::from(c)))
+        // .map(|Pixel(p, c)| Pixel(p, Bgr888::new(c.r(), c.g(), c.b())))
         .draw(display)
         .unwrap();
     t.draw(display).unwrap();
