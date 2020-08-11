@@ -67,7 +67,7 @@ fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
     display.clear(Bgr888::BLACK).unwrap();
 
     let text_style = TextStyleBuilder::new(embedded_graphics::fonts::Font8x16)
-        .text_color(Rgb888::new(139, 0, 139))
+        .text_color(Rgb888::BLUE)
         .build();
 
     let bmp = Bmp::from_slice(RUST_PRIDE_BMP).expect("Failed to parse BMP image");
@@ -95,10 +95,9 @@ fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
     t_bgr.draw(display).unwrap();
 
     let display = &mut UefiDisplayNotGeneric::new(mode, graphics.frame_buffer());
-    // display.clear(Bgr888::BLACK).unwrap();
 
     let text_style = TextStyleBuilder::new(embedded_graphics::fonts::Font8x16)
-        .text_color(Bgr888::new(139, 0, 139))
+        .text_color(Bgr888::BLUE)
         .build();
 
     let bmp = Bmp::from_slice(RUST_PRIDE_BMP).expect("Failed to parse BMP image");
