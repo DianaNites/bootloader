@@ -75,7 +75,7 @@ fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
 
     let bmp = Bmp::from_slice(RUST_PRIDE_BMP).expect("Failed to parse BMP image");
     let rust_pride: Image<Bmp, Rgb565> = Image::new(&bmp, Point::zero());
-    let t = Text::new("rust-pride.bmp, Image<Bmp, Rgb565>", Point::zero())
+    let t = Text::new("rust-pride.bmp, Generic, Image<Bmp, Rgb565>", Point::zero())
         .into_styled(text_style)
         .align_to(&rust_pride, horizontal::NoAlignment, vertical::TopToBottom);
 
@@ -84,7 +84,7 @@ fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
         horizontal::NoAlignment,
         vertical::TopToBottom,
     );
-    let t_bgr = Text::new("rust-pride.bmp, Image<Bmp, Bgr565>", Point::zero())
+    let t_bgr = Text::new("rust-pride.bmp, Generic, Image<Bmp, Bgr565>", Point::zero())
         .into_styled(text_style)
         .align_to(
             &rust_pride_bgr,
