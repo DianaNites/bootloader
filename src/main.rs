@@ -43,7 +43,7 @@ fn _graphical_ui(_st: &SystemTable<Boot>, _gop: &mut GraphicsOutput) {
 
 /// Check whether the system supports what we require.
 ///
-/// Currently we require UEFI 2.8, and the following protocols:
+/// Currently we require at least UEFI 2.3.1, and the following protocols:
 ///
 /// - Text Output
 /// - Block IO
