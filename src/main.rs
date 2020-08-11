@@ -42,11 +42,11 @@ fn graphics_supported(st: &SystemTable<Boot>) -> Option<&mut GraphicsOutput> {
     }
 }
 
-/// Graphical display
-fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
-    let mode = graphics.current_mode_info();
-    info!("Current Mode: {:?}", mode);
+/// Setup the screen mode
+fn setup_screen(graphics: &mut GraphicsOutput) -> Status {
     info!("Attempting to switch to native resolution");
+    // let best_mode = graphics.modes().last().ok_or(Status::NOT_FOUND)?.log();
+    // graphics.set_mode(&best_mode)?.log();
     let mut new_mode = None;
     for mode in graphics.modes() {
         let mode = mode.unwrap();
@@ -57,10 +57,16 @@ fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
         }
     }
     if let Some(mode) = new_mode {
-        graphics.set_mode(&mode).unwrap().log();
+        info!("New current Mode: {:?}", mode.info());
+        graphics.set_mode(&mode)?.log();
     }
+    Status::SUCCESS
+}
+
+/// Graphical display
+fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
     let mode = graphics.current_mode_info();
-    info!("New current Mode: {:?}", mode);
+    info!("Current Mode: {:?}", mode);
 
     let (x, y) = mode.resolution();
     let x = x / 2;
@@ -158,16 +164,15 @@ fn setup_term(stdout: &mut Output) -> Status {
 #[entry]
 fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
     uefi_services::init(&st).expect_success("Failed to init");
-    let rev = st.uefi_revision();
-    let stdout = st.stdout();
     st.boot_services()
         .set_watchdog_timer(0, u64::max_value(), None)?
         .log();
-    setup_term(stdout)?.log();
+    setup_term(st.stdout())?.log();
     check_support(&st)?.log();
 
     info!("Initializing Graphics");
     if let Some(graphics) = graphics_supported(&st) {
+        setup_screen(graphics)?.log();
         graphical_ui(&st, graphics);
     } else {
         // TODO: Terminal
