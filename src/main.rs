@@ -2,16 +2,13 @@
 #![no_main]
 #![feature(abi_efiapi)]
 use embedded_graphics::{
-    drawable::Pixel,
-    egcircle,
-    egtext,
-    fonts::Font24x32,
+    fonts::Text,
     image::Image,
     pixelcolor::{RgbColor, *},
-    prelude::*,
-    primitive_style,
-    text_style,
+    style::TextStyleBuilder,
+    DrawTarget,
 };
+use embedded_layout::prelude::*;
 use log::*;
 use tinybmp::Bmp;
 use uefi::{
@@ -23,13 +20,11 @@ use uefi::{
 };
 use uefi_graphics::UefiDisplay;
 
-// static IMAGE: &[u8] = include_bytes!("../scratch/EFI/icons/Trans-Rust.bmp");
-static IMAGE: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.bmp");
+static _TRANS_RUST_BMP: &[u8] = include_bytes!("../scratch/EFI/icons/Trans-Rust.bmp");
+static RUST_PRIDE_BMP: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.bmp");
 
-// static IMAGE_TGA: &[u8] =
-// include_bytes!("../scratch/EFI/icons/Trans-Rust.tga");
-// static IMAGE_TGA: &[u8] =
-// include_bytes!("../scratch/EFI/icons/rust-pride.tga");
+static _TRANS_RUST_TGA: &[u8] = include_bytes!("../scratch/EFI/icons/Trans-Rust.tga");
+static _RUST_PRIDE_TGA: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.tga");
 
 /// Returns `Some(GraphicsOutput)` if graphical output is supported
 fn graphics_supported(st: &SystemTable<Boot>) -> Option<&mut GraphicsOutput> {
@@ -68,37 +63,45 @@ fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
     let mode = graphics.current_mode_info();
     info!("Current Mode: {:?}", mode);
 
-    let (x, y) = mode.resolution();
-    let x = x / 2;
-    let y = y / 2;
-    let _c = egcircle!(
-        center = (x as _, y as _),
-        radius = (x / 2) as _,
-        // style = primitive_style!(fill_color = Rgb888::new(34, 139, 34))
-        style = primitive_style!(fill_color = Rgb565::BLUE)
-    );
-    let text = "RUST HARDWARE UEFI SAYS TRANS RIGHTS";
-    let x = x - (text.len() * 12);
-    let y = y - (32 / 2);
-    let t = egtext!(
-        text = text,
-        top_left = (x as _, y as _),
-        // style = text_style!(font = Font24x32, text_color = Bgr888::new(2, 136, 255))
-        style = text_style!(font = Font24x32, text_color = Rgb888::new(139, 0, 139))
-    );
-    let bmp = Bmp::from_slice(IMAGE).expect("Failed to parse BMP image");
-    let image: Image<Bmp, Rgb565> = Image::new(&bmp, Point::zero());
+    let display = &mut UefiDisplay::new(mode, graphics.frame_buffer());
+    display.clear(Bgr888::BLACK).unwrap();
 
-    // let mut display = UefiDisplay::new(unsafe { &mut *graphics.get() });
-    let mut display = UefiDisplay::new(mode, graphics.frame_buffer());
-    // c.draw(&mut display).unwrap();
-    // image.draw(&mut display).unwrap();
-    image
-        .into_iter()
-        .map(|Pixel(p, c)| Pixel(p, Bgr565::from(c)))
-        .draw(&mut display)
-        .unwrap();
-    t.draw(&mut display).unwrap();
+    // let display_area = <UefiDisplay as
+    // DisplayArea<Bgr888>>::display_area(&display);
+
+    let text_style = TextStyleBuilder::new(embedded_graphics::fonts::Font8x16)
+        .text_color(Rgb888::new(139, 0, 139))
+        .build();
+
+    let bmp = Bmp::from_slice(RUST_PRIDE_BMP).expect("Failed to parse BMP image");
+    let rust_pride: Image<Bmp, Rgb565> = Image::new(&bmp, Point::zero());
+    let t = Text::new("rust-pride.bmp, Image<Bmp, Rgb565>", Point::zero())
+        .into_styled(text_style)
+        .align_to(&rust_pride, horizontal::NoAlignment, vertical::TopToBottom);
+
+    let rust_pride_bgr = Image::<Bmp, Bgr565>::new(&bmp, Point::zero()).align_to(
+        &t,
+        horizontal::NoAlignment,
+        vertical::TopToBottom,
+    );
+    let t_bgr = Text::new("rust-pride.bmp, Image<Bmp, Bgr565>", Point::zero())
+        .into_styled(text_style)
+        .align_to(
+            &rust_pride_bgr,
+            horizontal::NoAlignment,
+            vertical::TopToBottom,
+        );
+
+    rust_pride.draw(display).unwrap();
+    rust_pride_bgr.draw(display).unwrap();
+    t.draw(display).unwrap();
+    t_bgr.draw(display).unwrap();
+
+    // image
+    //     .into_iter()
+    //     .map(|Pixel(p, c)| Pixel(p, Bgr565::from(c)))
+    //     .draw(&mut display)
+    //     .unwrap();
 }
 
 /// Check whether the system supports what we require.
