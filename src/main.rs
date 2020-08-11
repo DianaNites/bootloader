@@ -32,93 +32,18 @@ static IMAGE: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.bmp");
 // include_bytes!("../scratch/EFI/icons/rust-pride.tga");
 
 /// Returns `Some(GraphicsOutput)` if graphical output is supported
-fn _graphics_supported(_st: &SystemTable<Boot>) -> Option<&mut GraphicsOutput> {
-    None
+fn graphics_supported(st: &SystemTable<Boot>) -> Option<&mut GraphicsOutput> {
+    unsafe {
+        st.boot_services()
+            .locate_protocol::<GraphicsOutput>()
+            .map(|c| c.log())
+            .ok()
+            .map(|g| &mut *g.get())
+    }
 }
 
 /// Graphical display
-fn _graphical_ui(_st: &SystemTable<Boot>, _gop: &mut GraphicsOutput) {
-    //
-}
-
-/// Check whether the system supports what we require.
-///
-/// Currently we require at least UEFI 2.3.1, and the following protocols:
-///
-/// - Text Output
-/// - Block IO
-/// - Disk IO
-/// - Simple Filesystem
-///
-/// And optionally support:
-///
-/// - Graphics output
-/// - Simple Pointer
-/// - PXE Base Code
-/// - Network Interface Identifier
-/// - Simple Network
-/// - Managed Network
-/// - HTTP Service Binding
-/// - HTTP
-/// - HTTP Utilities
-/// - TLS Service Binding
-/// - TLS
-/// - DNS4 Service Binding
-/// - DNS4
-/// - EAP
-/// - EAP Configuration
-/// - EAP Management 2
-/// - Supplicant
-fn check_support(st: &SystemTable<Boot>) -> Status {
-    let boot = st.boot_services();
-    let _text = boot
-        .locate_protocol::<Output>()
-        .map_err(|_| Status::UNSUPPORTED)?;
-    let _fs = boot
-        .locate_protocol::<SimpleFileSystem>()
-        .map_err(|_| Status::UNSUPPORTED)?;
-
-    Status::SUCCESS
-}
-
-#[entry]
-fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
-    uefi_services::init(&st).expect_success("Failed to init");
-    let rev = st.uefi_revision();
-    let stdout = st.stdout();
-    trace!("Started bootloader!");
-    warn!("If you can see this, the UEFI console didn't properly reset.");
-    stdout.reset(false)?.unwrap();
-    trace!("Cleared console!");
-    info!(
-        "UEFI {:?}\nFirmware {}: {:?}",
-        rev,
-        st.firmware_vendor(),
-        st.firmware_revision()
-    );
-    check_support(&st)?.log();
-
-    let mode = stdout.modes().last().unwrap().unwrap();
-    info!("Setting output mode to: {:?}", mode);
-    stdout.set_mode(mode).log_warning().unwrap();
-    info!("Text output set mode to: {:?}", mode);
-    info!("UEFI {:?}", rev);
-    info!(
-        "Firmware {}: {:?}",
-        st.firmware_vendor(),
-        st.firmware_revision()
-    );
-    st.boot_services()
-        .set_watchdog_timer(0, u64::max_value(), None)
-        .expect_success("Couldn't disable watchdog");
-    info!("Attempting graphics");
-    let graphics = unsafe {
-        &mut *st
-            .boot_services()
-            .locate_protocol::<GraphicsOutput>()
-            .unwrap_success()
-            .get()
-    };
+fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
     let mode = graphics.current_mode_info();
     info!("Current Mode: {:?}", mode);
     info!("Attempting to switch to native resolution");
@@ -168,7 +93,86 @@ fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
         .draw(&mut display)
         .unwrap();
     t.draw(&mut display).unwrap();
-    //
+}
+
+/// Check whether the system supports what we require.
+///
+/// Currently we require at least UEFI 2.3.1, and the following protocols:
+///
+/// - Text Output
+/// - Block IO
+/// - Disk IO
+/// - Simple Filesystem
+///
+/// And optionally support:
+///
+/// - Graphics output
+/// - Simple Pointer
+/// - PXE Base Code
+/// - Network Interface Identifier
+/// - Simple Network
+/// - Managed Network
+/// - HTTP Service Binding
+/// - HTTP
+/// - HTTP Utilities
+/// - TLS Service Binding
+/// - TLS
+/// - DNS4 Service Binding
+/// - DNS4
+/// - EAP
+/// - EAP Configuration
+/// - EAP Management 2
+/// - Supplicant
+fn check_support(st: &SystemTable<Boot>) -> Status {
+    let boot = st.boot_services();
+    let _text = boot
+        .locate_protocol::<Output>()
+        .map_err(|_| Status::UNSUPPORTED)?;
+    let _fs = boot
+        .locate_protocol::<SimpleFileSystem>()
+        .map_err(|_| Status::UNSUPPORTED)?;
+    let rev = st.uefi_revision();
+    info!(
+        "Using UEFI: {:?} with Firmware: {}: {:?}",
+        rev,
+        st.firmware_vendor(),
+        st.firmware_revision()
+    );
+    if rev.major() < 2 || (rev.major() == 2 && rev.minor() < 31) {
+        error!("Unsupported UEFI version");
+        return Status::UNSUPPORTED;
+    }
+    Status::SUCCESS
+}
+
+fn setup_term(stdout: &mut Output) -> Status {
+    let best_mode = stdout.modes().last().unwrap().unwrap();
+    stdout.set_mode(best_mode)?.log();
+    warn!("If you can see this, the UEFI console didn't properly reset.");
+    stdout.reset(false)?.log();
+    trace!("Cleared console!");
+    info!("Current terminal mode: {:?}.", best_mode);
+    Status::SUCCESS
+}
+
+#[entry]
+fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
+    uefi_services::init(&st).expect_success("Failed to init");
+    let rev = st.uefi_revision();
+    let stdout = st.stdout();
+    st.boot_services()
+        .set_watchdog_timer(0, u64::max_value(), None)?
+        .log();
+    setup_term(stdout)?.log();
+    check_support(&st)?.log();
+
+    info!("Initializing Graphics");
+    if let Some(graphics) = graphics_supported(&st) {
+        graphical_ui(&st, graphics);
+    } else {
+        // TODO: Terminal
+    }
+
     loop {
         st.boot_services().stall(10000)
     }
