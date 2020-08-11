@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(abi_efiapi)]
+use alloc::format;
 use embedded_graphics::{
     fonts::Text,
     image::Image,
@@ -19,6 +20,7 @@ use uefi::{
     },
 };
 use uefi_graphics::{UefiDisplay, UefiDisplayNotGeneric};
+extern crate alloc;
 
 static _TRANS_RUST_BMP: &[u8] = include_bytes!("../scratch/EFI/icons/Trans-Rust.bmp");
 static RUST_PRIDE_BMP: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.bmp");
@@ -143,6 +145,13 @@ fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
         .unwrap();
     t.draw(display).unwrap();
     t_bgr.draw(display).unwrap();
+
+    let text = format!("Current Mode Info: {:#?}", mode);
+    let info = Text::new(&text, Point::zero())
+        .into_styled(text_style)
+        .align_to(&t_bgr, horizontal::NoAlignment, vertical::TopToBottom);
+
+    info.draw(display).unwrap();
 }
 
 /// Check whether the system supports what we require.
