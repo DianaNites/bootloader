@@ -1,7 +1,6 @@
 #![no_std]
 #![no_main]
 #![feature(abi_efiapi)]
-use alloc::format;
 use embedded_graphics::{
     fonts::Text,
     image::Image,
@@ -19,8 +18,7 @@ use uefi::{
         media::fs::SimpleFileSystem,
     },
 };
-use uefi_graphics::{UefiDisplay, UefiDisplayNotGeneric};
-extern crate alloc;
+use uefi_graphics::UefiDisplay;
 
 static _TRANS_RUST_BMP: &[u8] = include_bytes!("../scratch/EFI/icons/Trans-Rust.bmp");
 static RUST_PRIDE_BMP: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.bmp");
@@ -95,63 +93,6 @@ fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
     rust_pride_bgr.draw(display).unwrap();
     t.draw(display).unwrap();
     t_bgr.draw(display).unwrap();
-
-    let display = &mut UefiDisplayNotGeneric::new(mode, graphics.frame_buffer());
-
-    let text_style = TextStyleBuilder::new(embedded_graphics::fonts::Font8x16)
-        .text_color(Bgr888::BLUE)
-        .build();
-
-    let bmp = Bmp::from_slice(RUST_PRIDE_BMP).expect("Failed to parse BMP image");
-    let rust_pride: Image<Bmp, Rgb565> = Image::new(&bmp, Point::zero()).align_to(
-        &t_bgr,
-        horizontal::NoAlignment,
-        vertical::TopToBottom,
-    );
-    let t = Text::new(
-        "rust-pride.bmp, Manually convert pixels, Image<Bmp, Rgb565>",
-        Point::zero(),
-    )
-    .into_styled(text_style)
-    .align_to(&rust_pride, horizontal::NoAlignment, vertical::TopToBottom);
-
-    let rust_pride_bgr = Image::<Bmp, Bgr565>::new(&bmp, Point::zero()).align_to(
-        &t,
-        horizontal::NoAlignment,
-        vertical::TopToBottom,
-    );
-    let t_bgr = Text::new(
-        "rust-pride.bmp, Manually convert pixels, Image<Bmp, Bgr565>",
-        Point::zero(),
-    )
-    .into_styled(text_style)
-    .align_to(
-        &rust_pride_bgr,
-        horizontal::NoAlignment,
-        vertical::TopToBottom,
-    );
-
-    rust_pride
-        .into_iter()
-        .map(|Pixel(p, c)| Pixel(p, Bgr888::from(c)))
-        // .map(|Pixel(p, c)| Pixel(p, Bgr888::new(c.r(), c.g(), c.b())))
-        .draw(display)
-        .unwrap();
-    rust_pride_bgr
-        .into_iter()
-        .map(|Pixel(p, c)| Pixel(p, Bgr888::from(c)))
-        // .map(|Pixel(p, c)| Pixel(p, Bgr888::new(c.r(), c.g(), c.b())))
-        .draw(display)
-        .unwrap();
-    t.draw(display).unwrap();
-    t_bgr.draw(display).unwrap();
-
-    let text = format!("Current Mode Info: {:#?}", mode);
-    let info = Text::new(&text, Point::zero())
-        .into_styled(text_style)
-        .align_to(&t_bgr, horizontal::NoAlignment, vertical::TopToBottom);
-
-    info.draw(display).unwrap();
 }
 
 /// Check whether the system supports what we require.
