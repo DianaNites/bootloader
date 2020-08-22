@@ -17,9 +17,6 @@ embedded-layout = "0.1.0"
 profont = "0.4.0"
 uefi-graphics = { path = "../uefi-graphics" }
 
-[package.metadata.cargo-sysroot]
-target = "x86_64-unknown-uefi"
-
 # [package.metadata.cargo_runner]
 # command = [
 #     "qemu-system-x86_64",
