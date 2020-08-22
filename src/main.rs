@@ -204,6 +204,7 @@ fn check_support(st: &SystemTable<Boot>) -> Status {
     Status::SUCCESS
 }
 
+/// Setup the UEFI terminal, the best terminal mode, reset it.
 fn setup_term(stdout: &mut Output) -> Status {
     let best_mode = stdout.modes().last().unwrap().unwrap();
     stdout.set_mode(best_mode)?.log();
