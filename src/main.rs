@@ -158,6 +158,13 @@ fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
 ///
 /// Currently we require at least UEFI 2.3.1, and the following protocols:
 ///
+/// Required by UEFI:
+///
+/// - Device Path
+///
+/// Platform Specific:
+///
+/// - Text Input
 /// - Text Output
 /// - Block IO
 /// - Disk IO
