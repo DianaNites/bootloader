@@ -10,7 +10,7 @@ fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
     fn res() -> (usize, usize) {
         (1280u32 as usize, 768u32 as usize)
     }
-    // This will lead to UEFI infinitely reseting.
+    // This will lead to UEFI infinitely resetting.
     let (display_width, display_height) = res();
 
     // This will not.
