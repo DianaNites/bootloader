@@ -1,6 +1,10 @@
 # UEFI problem reproducer
 
-Instructions
+## Issue
+
+The code in this repository causes UEFI?/QEMU to enter a reset loop
+
+## Instructions
 
 Run
 
