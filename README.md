@@ -2,7 +2,9 @@
 
 ## Issue
 
-The code in this repository causes UEFI?/QEMU to enter a reset loop
+The code in this repository causes QEMU to enter a reset loop.
+
+This was also tested on real hardware, with the same result.
 
 ## Instructions
 
@@ -25,4 +27,5 @@ You may need to change the paths.
 
 * Arch Linux
 * QEMU emulator version 5.1.0
+* Asus H81M-D PLUS Motherboard
 * rustc 1.47.0-nightly (663d2f5cd 2020-08-22)
