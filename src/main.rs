@@ -3,7 +3,7 @@
 #![feature(abi_efiapi)]
 use embedded_graphics::{
     fonts::Text,
-    image::{Image, IntoPixelIter},
+    image::Image,
     pixelcolor::{RgbColor, *},
     style::TextStyleBuilder,
     DrawTarget,
@@ -68,15 +68,20 @@ fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
         .build();
 
     let image = Tga::from_slice(TRANS_RUST_TGA).expect("Failed to parse BMP image");
+    let src_width = image.width();
+    let src_height = image.height();
+    let x_scale: f64 = src_width as f64 / display.size().width as f64;
+    let y_scale: f64 = src_height as f64 / display.size().height as f64;
 
     let rust_pride: Image<Tga, Rgb888> = Image::new(&image, Point::zero());
-    let x = rust_pride
+    rust_pride
         .into_iter()
         .map(|c| {
             Pixel(
                 Point {
-                    x: c.0.x / 2,
-                    y: c.0.y / 2,
+                    x: (c.0.x as f64 * x_scale) as i32,
+                    // x: c.0.x,
+                    y: (c.0.y as f64 / y_scale) as i32,
                 },
                 c.1,
             )
