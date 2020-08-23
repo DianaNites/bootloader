@@ -16,3 +16,9 @@ qemu-system-x86_64 -nodefaults -machine q35 -smp 3 -m 128M --enable-kvm -drive i
 
 Note the above qemu command expects Arch Linux with qemu and edk2-ovmf installed.
 You may need to change the paths.
+
+## System
+
+* Arch Linux
+* QEMU emulator version 5.1.0
+* rustc 1.47.0-nightly (663d2f5cd 2020-08-22)
