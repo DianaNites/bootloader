@@ -3,14 +3,14 @@
 #![feature(abi_efiapi)]
 use embedded_graphics::{
     fonts::Text,
-    image::Image,
+    image::{Image, IntoPixelIter},
     pixelcolor::{RgbColor, *},
     style::TextStyleBuilder,
     DrawTarget,
 };
 use embedded_layout::prelude::*;
 use log::*;
-use tinybmp::Bmp;
+use tinytga::Tga;
 use uefi::{
     prelude::*,
     proto::{
@@ -20,10 +20,7 @@ use uefi::{
 };
 use uefi_graphics::UefiDisplay;
 
-static _TRANS_RUST_BMP: &[u8] = include_bytes!("../scratch/EFI/icons/Trans-Rust.bmp");
-static RUST_PRIDE_BMP: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.bmp");
-
-static _TRANS_RUST_TGA: &[u8] = include_bytes!("../scratch/EFI/icons/Trans-Rust.tga");
+static TRANS_RUST_TGA: &[u8] = include_bytes!("../scratch/EFI/icons/Trans-Rust.tga");
 static _RUST_PRIDE_TGA: &[u8] = include_bytes!("../scratch/EFI/icons/rust-pride.tga");
 
 /// Returns `Some(GraphicsOutput)` if graphical output is supported
@@ -67,32 +64,32 @@ fn graphical_ui(_st: &SystemTable<Boot>, graphics: &mut GraphicsOutput) {
     display.clear(Bgr888::BLACK).unwrap();
 
     let text_style = TextStyleBuilder::new(embedded_graphics::fonts::Font8x16)
-        .text_color(Rgb888::BLUE)
+        .text_color(Rgb888::new(139, 0, 139))
         .build();
 
-    let bmp = Bmp::from_slice(RUST_PRIDE_BMP).expect("Failed to parse BMP image");
-    let rust_pride: Image<Bmp, Rgb565> = Image::new(&bmp, Point::zero());
+    let image = Tga::from_slice(TRANS_RUST_TGA).expect("Failed to parse BMP image");
+
+    let rust_pride: Image<Tga, Rgb888> = Image::new(&image, Point::zero());
+    let x = rust_pride
+        .into_iter()
+        .map(|c| {
+            Pixel(
+                Point {
+                    x: c.0.x / 2,
+                    y: c.0.y / 2,
+                },
+                c.1,
+            )
+        })
+        .draw(display)
+        .unwrap();
+
     let t = Text::new("rust-pride.bmp, Generic, Image<Bmp, Rgb565>", Point::zero())
         .into_styled(text_style)
         .align_to(&rust_pride, horizontal::NoAlignment, vertical::TopToBottom);
 
-    let rust_pride_bgr = Image::<Bmp, Bgr565>::new(&bmp, Point::zero()).align_to(
-        &t,
-        horizontal::NoAlignment,
-        vertical::TopToBottom,
-    );
-    let t_bgr = Text::new("rust-pride.bmp, Generic, Image<Bmp, Bgr565>", Point::zero())
-        .into_styled(text_style)
-        .align_to(
-            &rust_pride_bgr,
-            horizontal::NoAlignment,
-            vertical::TopToBottom,
-        );
-
-    rust_pride.draw(display).unwrap();
-    rust_pride_bgr.draw(display).unwrap();
+    // rust_pride.draw(display).unwrap();
     t.draw(display).unwrap();
-    t_bgr.draw(display).unwrap();
 }
 
 /// Check whether the system supports what we require.
