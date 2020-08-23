@@ -5,7 +5,7 @@ Instructions
 Run
 
 ```shell
-cargo build && cp ./target/x86_64-unknown-uefi/debug/bootloader.efi ./scratch/EFI/Boot/BootX64.efi
+cargo build && mkdir -p ./scratch/EFI/Boot && cp ./target/x86_64-unknown-uefi/debug/bootloader.efi ./scratch/EFI/Boot/BootX64.efi
 ```
 
 Then
