@@ -2,7 +2,7 @@
 
 ## Issue
 
-The code in this repository causes QEMU to enter a reset loop.
+The code in this repository causes UEFI to enter a reset loop.
 
 This was also tested on real hardware, with the same result.
 
