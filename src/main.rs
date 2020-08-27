@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(abi_efiapi)]
+#![feature(abi_efiapi, asm)]
 use embedded_graphics::{
     fonts::Text,
     image::Image,
@@ -183,6 +183,6 @@ fn efi_main(_img: Handle, st: SystemTable<Boot>) -> Status {
     }
 
     loop {
-        st.boot_services().stall(10000)
+        unsafe { asm!("hlt") };
     }
 }
